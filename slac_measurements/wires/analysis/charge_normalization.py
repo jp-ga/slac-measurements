@@ -3,7 +3,7 @@ import numpy as np
 from slac_measurements.wires.collection.results import WireMeasurementCollectionResult
 
 
-_LOW_CHARGE_THRESHOLD = 1e7
+_LOW_TMIT_THRESHOLD = 1e7
 
 
 def compute_charge_normalization(
@@ -37,7 +37,7 @@ def compute_charge_normalization(
     toroid_name = _resolve_toroid(collection_result, toroid)
     charge = _extract_charge_data(collection_result.raw_data, toroid_name)
 
-    valid_mask = (charge > _LOW_CHARGE_THRESHOLD) | np.isnan(charge)
+    valid_mask = (charge > _LOW_TMIT_THRESHOLD) | np.isnan(charge)
 
     valid_finite = valid_mask & ~np.isnan(charge)
     mean_charge = np.nanmean(charge[valid_finite]) if np.any(valid_finite) else 1.0
