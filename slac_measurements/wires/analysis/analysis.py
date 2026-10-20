@@ -246,7 +246,7 @@ class WireMeasurementAnalysis(slac_measurements.beam_profile.BeamProfileAnalysis
                 warnings.warn(msg, UserWarning, stacklevel=2)
                 i = np.argmax(y)
                 center = x[i]
-                rms = (x[-1] - x[0]) / 4  # Default quarter-range
+                rms = np.ptp(x) / 4
             else:
                 # Weighted centroid
                 weights = y_thresholded
@@ -258,15 +258,11 @@ class WireMeasurementAnalysis(slac_measurements.beam_profile.BeamProfileAnalysis
             left_bound = center - n_stds * rms
             right_bound = center + n_stds * rms
 
-            # Find indices
-            left = np.searchsorted(x, left_bound, side="left")
-            right = np.searchsorted(x, right_bound, side="right")
+            mask = (x >= left_bound) & (x <= right_bound)
+            if not mask.any():
+                mask = np.ones(len(x), dtype=bool)
 
-            # Clip to valid range
-            left = max(0, left)
-            right = min(len(y) - 1, right)
-
-            return x[left : right + 1], y[left : right + 1]
+            return x[mask], y[mask]
 
         profile_data = profile_measurements[profile]
         x_stage = profile_data.positions
