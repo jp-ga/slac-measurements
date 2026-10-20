@@ -1,4 +1,6 @@
 import importlib
+import logging
+
 import numpy as np
 from pydantic import ConfigDict, PrivateAttr
 from scipy.ndimage import median_filter
@@ -21,6 +23,8 @@ from slac_measurements.wires.analysis.results import (
 )
 
 FittingMethod = Literal["gaussian", "asymmetric_gaussian", "super_gaussian"]
+
+logger = logging.getLogger(__name__)
 
 
 class WireMeasurementAnalysis(slac_measurements.beam_profile.BeamProfileAnalysis):
@@ -90,11 +94,21 @@ class WireMeasurementAnalysis(slac_measurements.beam_profile.BeamProfileAnalysis
         metadata.rms_detector = effective_detector
 
         if charge_normalization:
-            self._charge_factors, self._charge_valid_mask, charge_toroid = (
-                compute_charge_normalization(
-                    self.collection_result, toroid=charge_toroid
+            try:
+                self._charge_factors, self._charge_valid_mask, charge_toroid = (
+                    compute_charge_normalization(
+                        self.collection_result, toroid=charge_toroid
+                    )
                 )
-            )
+            except ValueError:
+                logger.warning(
+                    "Charge normalization unavailable — continuing without it. "
+                    "Check that charge_toroids in the device metadata names a "
+                    "device present in the BSA buffer.",
+                    exc_info=True,
+                )
+                self._charge_factors = None
+                self._charge_valid_mask = None
         else:
             self._charge_factors = None
             self._charge_valid_mask = None
